@@ -2,6 +2,7 @@ package activedirectory
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/go-ldap/ldap/v3"
@@ -47,6 +48,7 @@ func init() {
 }
 
 func TestAccObjectMemberOf_Basic(t *testing.T) {
+	base_ou := os.Getenv("AD_BASE_OU")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -54,22 +56,22 @@ func TestAccObjectMemberOf_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// add 2 computer to a group
-				Config: testAccResourceObjectMemberOfTestData(`[activedirectory_group.test_acc_group1.dn, activedirectory_group.test_acc_group2.dn]`),
+				Config: testAccResourceObjectMemberOfTestData(base_ou, `[activedirectory_group.test_acc_group1.dn, activedirectory_group.test_acc_group2.dn]`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckObjectMemberOfRemoteAttr("activedirectory_object_memberof.test_acc_obj_memberof"),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "object_dn", "CN=test_acc_comp1,DC=dev,DC=private"),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.2656686201", "CN=test_acc_group1,DC=dev,DC=private"),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.3846656666", "CN=test_acc_group2,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "object_dn", "CN=test_acc_comp1,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.2656686201", "CN=test_acc_group1,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.3846656666", "CN=test_acc_group2,"+base_ou),
 				),
 			}, {
 				// remove 1 and add another computer to a group
-				Config: testAccResourceObjectMemberOfTestData(`[activedirectory_group.test_acc_group1.dn, activedirectory_group.test_acc_group3.dn]`),
+				Config: testAccResourceObjectMemberOfTestData(base_ou, `[activedirectory_group.test_acc_group1.dn, activedirectory_group.test_acc_group3.dn]`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					testAccCheckObjectMemberOfRemoteAttr("activedirectory_object_memberof.test_acc_obj_memberof"),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "object_dn", "CN=test_acc_comp1,DC=dev,DC=private"),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.2656686201", "CN=test_acc_group1,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "object_dn", "CN=test_acc_comp1,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.2656686201", "CN=test_acc_group1,"+base_ou),
 					resource.TestCheckNoResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.3846656666"),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.2057163012", "CN=test_acc_group3,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.2057163012", "CN=test_acc_group3,"+base_ou),
 				),
 			},
 		},
@@ -77,33 +79,33 @@ func TestAccObjectMemberOf_Basic(t *testing.T) {
 }
 
 // also create 1 computer and 3 group resource to test membership
-func testAccResourceObjectMemberOfTestData(members string) string {
+func testAccResourceObjectMemberOfTestData(base_ou, members string) string {
 	return fmt.Sprintf(`
 resource "activedirectory_computer" "test_acc_comp1" {
 	name             = "test_acc_comp1"
 	sam_account_name = "test_acc_comp1$"
-	base_ou_dn       = "DC=dev,DC=private"
+	base_ou_dn       = "%s"
 }
 resource "activedirectory_group" "test_acc_group1" {
 	name             = "test_acc_group1"
 	sam_account_name = "test_acc_group1"
-	base_ou_dn       = "DC=dev,DC=private"
+	base_ou_dn       = "%s"
 }
 resource "activedirectory_group" "test_acc_group2" {
 	name             = "test_acc_group2"
 	sam_account_name = "test_acc_group2"
-	base_ou_dn       = "DC=dev,DC=private"
+	base_ou_dn       = "%s"
 }
 resource "activedirectory_group" "test_acc_group3" {
 	name             = "test_acc_group3"
 	sam_account_name = "test_acc_group3"
-	base_ou_dn       = "DC=dev,DC=private"
+	base_ou_dn       = "%s"
 }
 resource "activedirectory_object_memberof" "test_acc_obj_memberof" {
 	object_dn = activedirectory_computer.test_acc_comp1.dn
 	member_of = %s
 }
-`, members)
+`, base_ou, base_ou, base_ou, base_ou, members)
 }
 
 func testAccCheckObjectMemberOfDestroy(s *terraform.State) error {

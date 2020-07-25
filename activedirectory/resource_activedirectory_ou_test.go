@@ -2,6 +2,7 @@ package activedirectory
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/go-ldap/ldap/v3"
@@ -63,6 +64,7 @@ func init() {
 }
 
 func TestAccOU_Basic(t *testing.T) {
+	base_ou := os.Getenv("AD_BASE_OU")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -70,15 +72,15 @@ func TestAccOU_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// create object with only required argument defined
-				Config: `resource "activedirectory_ou" "test_acc_ou1" {
+				Config: fmt.Sprintf(`resource "activedirectory_ou" "test_acc_ou1" {
 					name             = "test_acc_ou1"
-					base_ou_dn       = "DC=dev,DC=private"
-				}`,
+					base_ou_dn       = "%s"
+				}`, base_ou),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_ou.test_acc_ou1"),
 					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou1", "name", "test_acc_ou1"),
-					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou1", "base_ou_dn", "DC=dev,DC=private"),
-					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou1", "dn", "OU=test_acc_ou1,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou1", "base_ou_dn", base_ou),
+					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou1", "dn", "OU=test_acc_ou1,"+base_ou),
 					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou1", "attributes", "{}"),
 					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou1", "description", ""),
 				),
@@ -88,6 +90,7 @@ func TestAccOU_Basic(t *testing.T) {
 }
 
 func TestAccOU_Advanced(t *testing.T) {
+	base_ou := os.Getenv("AD_BASE_OU")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -95,23 +98,23 @@ func TestAccOU_Advanced(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// create ou with optional arguments defined
-				Config: testAccResourceADOUTestData("2", "test_acc_ou2", "DC=dev,DC=private", "testing description"),
+				Config: testAccResourceADOUTestData("2", "test_acc_ou2", base_ou, "testing description"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_ou.test_acc_ou2"),
 					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "name", "test_acc_ou2"),
-					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "base_ou_dn", "DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "base_ou_dn", base_ou),
 					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "description", "testing description"),
-					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "dn", "OU=test_acc_ou2,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "dn", "OU=test_acc_ou2,"+base_ou),
 				),
 			}, {
 				// change name description
-				Config: testAccResourceADOUTestData("2", "test_acc_ou2_new", "DC=dev,DC=private", "testing description update"),
+				Config: testAccResourceADOUTestData("2", "test_acc_ou2_new", base_ou, "testing description update"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_ou.test_acc_ou2"),
 					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "name", "test_acc_ou2_new"),
-					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "base_ou_dn", "DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "base_ou_dn", base_ou),
 					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "description", "testing description update"),
-					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "dn", "OU=test_acc_ou2_new,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_ou.test_acc_ou2", "dn", "OU=test_acc_ou2_new,"+base_ou),
 				),
 			},
 		},

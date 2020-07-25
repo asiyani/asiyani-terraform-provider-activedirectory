@@ -36,6 +36,9 @@ func testAccPreCheck(t *testing.T) {
 	if v := os.Getenv("AD_DOMAIN"); v == "" {
 		t.Fatal("AD_DOMAIN must be set for acceptance tests")
 	}
+	if v := os.Getenv("AD_BASE_OU"); v == "" {
+		t.Fatal("AD_BASE_OU must be set for acceptance tests")
+	}
 	if v := os.Getenv("AD_BIND_USERNAME"); v == "" {
 		t.Fatal("AD_BIND_USERNAME must be set for acceptance tests")
 	}

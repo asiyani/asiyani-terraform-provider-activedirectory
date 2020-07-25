@@ -2,6 +2,7 @@ package activedirectory
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/go-ldap/ldap/v3"
@@ -47,6 +48,8 @@ func init() {
 }
 
 func TestAccComputer_Basic(t *testing.T) {
+	base_ou := os.Getenv("AD_BASE_OU")
+
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -54,18 +57,18 @@ func TestAccComputer_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// create object with only required argument defined
-				Config: `resource "activedirectory_computer" "test_acc_comp1" {
+				Config: fmt.Sprintf(`resource "activedirectory_computer" "test_acc_comp1" {
 					name             = "test_acc_comp1"
 					sam_account_name = "test_acc_comp1$"	
-					base_ou_dn       = "DC=dev,DC=private"
-				}`,
+					base_ou_dn       = "%s"
+				}`, base_ou),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_computer.test_acc_comp1"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "name", "test_acc_comp1"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "sam_account_name", "test_acc_comp1$"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "enabled", "true"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "base_ou_dn", "DC=dev,DC=private"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "dn", "CN=test_acc_comp1,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "base_ou_dn", base_ou),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "dn", "CN=test_acc_comp1,"+base_ou),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "attributes", "{}"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "description", ""),
 				),
@@ -75,6 +78,7 @@ func TestAccComputer_Basic(t *testing.T) {
 }
 
 func TestAccComputer_Advanced(t *testing.T) {
+	base_ou := os.Getenv("AD_BASE_OU")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -83,43 +87,43 @@ func TestAccComputer_Advanced(t *testing.T) {
 			{
 				// create object with all optional arguments defined
 				Config: testAccResourceADComputerTestData("2", "false", "test_acc_comp2", "test_acc_comp2",
-					"DC=dev,DC=private", "testing description", `{company=["home"],department=["IT TF"]}`),
+					base_ou, "testing description", `{company=["home"],department=["IT TF"]}`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_computer.test_acc_comp2"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "name", "test_acc_comp2"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "sam_account_name", "test_acc_comp2$"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "enabled", "false"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", "DC=dev,DC=private"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", base_ou),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2,"+base_ou),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "attributes", `{"company":["home"],"department":["IT TF"]}`),
 				),
 			}, {
 				// enabled object, Change CN, OU and attributes
 				Config: testAccResourceADComputerTestData("2", "true", "test_acc_comp2_update", "test_acc_comp2",
-					"cn=Computers,DC=dev,DC=private", "testing description", `{company=["Terraform"],department=["IT"],departmentNumber=["24"]}`),
+					"cn=Computers,"+base_ou, "testing description", `{company=["Terraform"],department=["IT"],departmentNumber=["24"]}`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_computer.test_acc_comp2"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "name", "test_acc_comp2_update"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "sam_account_name", "test_acc_comp2$"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "enabled", "true"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", "CN=Computers,DC=dev,DC=private"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2_update,CN=Computers,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", "CN=Computers,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2_update,CN=Computers,"+base_ou),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "attributes", `{"company":["Terraform"],"department":["IT"],"departmentNumber":["24"]}`),
 				),
 			}, {
 				// changed SAM name and remove some attributes
 				Config: testAccResourceADComputerTestData("2", "true", "test_acc_comp2_update", "test_acc_comp2_new",
-					"cn=Computers,DC=dev,DC=private", "testing description", `{company=["Terraform"]}`),
+					"cn=Computers,"+base_ou, "testing description", `{company=["Terraform"]}`),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_computer.test_acc_comp2"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "name", "test_acc_comp2_update"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "sam_account_name", "test_acc_comp2_new$"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "enabled", "true"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", "CN=Computers,DC=dev,DC=private"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2_update,CN=Computers,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", "CN=Computers,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2_update,CN=Computers,"+base_ou),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "attributes", `{"company":["Terraform"]}`),
 				),
 			},

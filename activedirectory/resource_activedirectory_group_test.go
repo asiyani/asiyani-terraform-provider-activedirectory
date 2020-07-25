@@ -2,6 +2,7 @@ package activedirectory
 
 import (
 	"fmt"
+	"os"
 	"testing"
 
 	"github.com/go-ldap/ldap/v3"
@@ -47,6 +48,7 @@ func init() {
 }
 
 func TestAccGroup_Basic(t *testing.T) {
+	base_ou := os.Getenv("AD_BASE_OU")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -54,17 +56,17 @@ func TestAccGroup_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// create object with only required argument defined
-				Config: `resource "activedirectory_group" "test_acc_group1" {
+				Config: fmt.Sprintf(`resource "activedirectory_group" "test_acc_group1" {
 					name             = "test_acc_group1"
 					sam_account_name = "test_acc_group1"
-					base_ou_dn       = "DC=dev,DC=private"
-				}`,
+					base_ou_dn       = "%s"
+				}`, base_ou),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_group.test_acc_group1"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "name", "test_acc_group1"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "sam_account_name", "test_acc_group1"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "base_ou_dn", "DC=dev,DC=private"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "dn", "CN=test_acc_group1,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "base_ou_dn", base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "dn", "CN=test_acc_group1,"+base_ou),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "scope", "global"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "type", "security"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "attributes", "{}"),
@@ -76,6 +78,7 @@ func TestAccGroup_Basic(t *testing.T) {
 }
 
 func TestAccGroup_Advanced(t *testing.T) {
+	base_ou := os.Getenv("AD_BASE_OU")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -84,58 +87,58 @@ func TestAccGroup_Advanced(t *testing.T) {
 			{
 				// create group as global, security and other optional arguments defined
 				Config: testAccResourceADGroupTestData("2", "test_acc_group2", "test_acc_group2",
-					"DC=dev,DC=private", "testing description", "global", "security"),
+					base_ou, "testing description", "global", "security"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_group.test_acc_group2"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "name", "test_acc_group2"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "sam_account_name", "test_acc_group2"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "base_ou_dn", "DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "base_ou_dn", base_ou),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "scope", "global"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "type", "security"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "dn", "CN=test_acc_group2,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "dn", "CN=test_acc_group2,"+base_ou),
 				),
 			}, {
 				// change CN and OU
 				Config: testAccResourceADGroupTestData("2", "test_acc_group2_update", "test_acc_group2",
-					"CN=Builtin,DC=dev,DC=private", "testing description", "global", "security"),
+					"CN=Builtin,"+base_ou, "testing description", "global", "security"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_group.test_acc_group2"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "name", "test_acc_group2_update"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "sam_account_name", "test_acc_group2"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "base_ou_dn", "CN=Builtin,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "base_ou_dn", "CN=Builtin,"+base_ou),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "scope", "global"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "type", "security"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "dn", "CN=test_acc_group2_update,CN=Builtin,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "dn", "CN=test_acc_group2_update,CN=Builtin,"+base_ou),
 				),
 			}, {
 				// create group as universal and distribution
 				Config: testAccResourceADGroupTestData("3", "test_acc_group3", "test_acc_group3",
-					"DC=dev,DC=private", "testing description", "universal", "distribution"),
+					base_ou, "testing description", "universal", "distribution"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_group.test_acc_group3"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "name", "test_acc_group3"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "sam_account_name", "test_acc_group3"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "base_ou_dn", "DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "base_ou_dn", base_ou),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "scope", "universal"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "type", "distribution"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "dn", "CN=test_acc_group3,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "dn", "CN=test_acc_group3,"+base_ou),
 				),
 			}, {
 				// create group as domain_local and security
 				Config: testAccResourceADGroupTestData("4", "test_acc_group4", "test_acc_group4",
-					"DC=dev,DC=private", "testing description", "domain_local", "security"),
+					base_ou, "testing description", "domain_local", "security"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_group.test_acc_group4"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "name", "test_acc_group4"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "sam_account_name", "test_acc_group4"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "base_ou_dn", "DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "base_ou_dn", base_ou),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "scope", "domain_local"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "type", "security"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "dn", "CN=test_acc_group4,DC=dev,DC=private"),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "dn", "CN=test_acc_group4,"+base_ou),
 				),
 			},
 		},
