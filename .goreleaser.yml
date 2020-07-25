@@ -1,0 +1,32 @@
+project_name: terraform-provider-activedirectory
+env:
+  - GO111MODULE=on
+
+before:
+  hooks:
+    - go mod download
+
+archives:
+  - name_template: "terraform-provider-activedirectory_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+    replacements:
+      linux: Linux
+      amd64: x86_64
+
+builds:
+  - binary: "terraform-provider-activedirectory_{{ .Version }}"
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+    main: main.go
+    ldflags:
+      - -s -w -X main.Version={{.Version}}
+    mod_timestamp: "{{ .CommitTimestamp }}"
+
+release:
+  disable: true
+
+changelog:
+  skip: true
