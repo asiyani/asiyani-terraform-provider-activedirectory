@@ -3,6 +3,7 @@ package activedirectory
 import (
 	"fmt"
 	"os"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -50,6 +51,9 @@ func init() {
 
 func TestAccGroupMembers_Basic(t *testing.T) {
 	base_ou := os.Getenv("AD_BASE_OU")
+	member1DN := "CN=test_acc_comp1," + base_ou
+	member2DN := "CN=test_acc_comp2," + base_ou
+	member3DN := "CN=test_acc_comp3," + base_ou
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -59,20 +63,20 @@ func TestAccGroupMembers_Basic(t *testing.T) {
 				// add 2 computer to a group
 				Config: testAccResourceADGroupMembersTestData(base_ou, `[activedirectory_computer.test_acc_comp1.dn, activedirectory_computer.test_acc_comp2.dn]`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckGroupMemberRemoteAttr("activedirectory_group_members.test_acc_group_member"),
+					testAccCheckGroupMemberRemoteAttr(base_ou, "activedirectory_group_members.test_acc_group_member"),
 					resource.TestCheckResourceAttr("activedirectory_group_members.test_acc_group_member", "group_dn", "CN=test_acc_group1,"+base_ou),
-					resource.TestCheckResourceAttr("activedirectory_group_members.test_acc_group_member", "members.2678311993", "CN=test_acc_comp1,"+base_ou),
-					resource.TestCheckResourceAttr("activedirectory_group_members.test_acc_group_member", "members.3837611738", "CN=test_acc_comp2,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group_members.test_acc_group_member", "members."+strconv.Itoa(lowercaseHashString(member1DN)), member1DN),
+					resource.TestCheckResourceAttr("activedirectory_group_members.test_acc_group_member", "members."+strconv.Itoa(lowercaseHashString(member2DN)), member2DN),
 				),
 			}, {
 				// remove 1 and add another computer to a group
 				Config: testAccResourceADGroupMembersTestData(base_ou, `[activedirectory_computer.test_acc_comp1.dn, activedirectory_computer.test_acc_comp3.dn]`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckGroupMemberRemoteAttr("activedirectory_group_members.test_acc_group_member"),
+					testAccCheckGroupMemberRemoteAttr(base_ou, "activedirectory_group_members.test_acc_group_member"),
 					resource.TestCheckResourceAttr("activedirectory_group_members.test_acc_group_member", "group_dn", "CN=test_acc_group1,"+base_ou),
-					resource.TestCheckResourceAttr("activedirectory_group_members.test_acc_group_member", "members.2678311993", "CN=test_acc_comp1,"+base_ou),
-					resource.TestCheckNoResourceAttr("activedirectory_group_members.test_acc_group_member", "members.3837611738"),
-					resource.TestCheckResourceAttr("activedirectory_group_members.test_acc_group_member", "members.2070400324", "CN=test_acc_comp3,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group_members.test_acc_group_member", "members."+strconv.Itoa(lowercaseHashString(member1DN)), member1DN),
+					resource.TestCheckNoResourceAttr("activedirectory_group_members.test_acc_group_member", "members."+strconv.Itoa(lowercaseHashString(member2DN))),
+					resource.TestCheckResourceAttr("activedirectory_group_members.test_acc_group_member", "members."+strconv.Itoa(lowercaseHashString(member3DN)), member3DN),
 				),
 			},
 		},
@@ -122,8 +126,11 @@ func testAccCheckGroupMemberDestroy(s *terraform.State) error {
 }
 
 // helper function for all test to check remote object attributes
-func testAccCheckGroupMemberRemoteAttr(resource string) resource.TestCheckFunc {
+func testAccCheckGroupMemberRemoteAttr(base_ou, resource string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
+		member1DN := "CN=test_acc_comp1," + base_ou
+		member2DN := "CN=test_acc_comp2," + base_ou
+		member3DN := "CN=test_acc_comp3," + base_ou
 		rs, ok := state.RootModule().Resources[resource]
 		if !ok {
 			return fmt.Errorf("Not found: %s", resource)
@@ -153,17 +160,21 @@ func testAccCheckGroupMemberRemoteAttr(resource string) resource.TestCheckFunc {
 		// also check attributes of remote object
 		for k, v := range rs.Primary.Attributes {
 			switch k {
-			case "members.2678311993":
+			case "members." + strconv.Itoa(lowercaseHashString(member1DN)):
 				if !contains(remoteMembers, v) {
-					return fmt.Errorf("member.2678311993 in state and remote object is different.  state:%s, Remote:%s", v, remoteMembers)
+					return fmt.Errorf("member.%s in state and remote object is different.  state:%s, Remote:%s", strconv.Itoa(lowercaseHashString(member1DN)), v, remoteMembers)
 				}
-			case "members.3837611738":
+			case "members." + strconv.Itoa(lowercaseHashString(member2DN)):
 				if !contains(remoteMembers, v) {
-					return fmt.Errorf("member.3837611738 in state and remote object is different.  state:%s, Remote:%s", v, remoteMembers)
+					return fmt.Errorf("member.%s in state and remote object is different.  state:%s, Remote:%s", strconv.Itoa(lowercaseHashString(member2DN)), v, remoteMembers)
 				}
-			case "members.2070400324":
+			case "members." + strconv.Itoa(lowercaseHashString(member3DN)):
 				if !contains(remoteMembers, v) {
-					return fmt.Errorf("member.2070400324 in state and remote object is different.  state:%s, Remote:%s", v, remoteMembers)
+					return fmt.Errorf("member.%s in state and remote object is different.  state:%s, Remote:%s", strconv.Itoa(lowercaseHashString(member3DN)), v, remoteMembers)
+				}
+			default:
+				if strings.HasPrefix(k, "members") && k != "members.#" {
+					return fmt.Errorf("unknown members attribute found in state, key: %s. value: %s\n", k, v)
 				}
 			}
 		}

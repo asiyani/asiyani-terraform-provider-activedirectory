@@ -3,6 +3,8 @@ package activedirectory
 import (
 	"fmt"
 	"os"
+	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/go-ldap/ldap/v3"
@@ -49,6 +51,9 @@ func init() {
 
 func TestAccObjectMemberOf_Basic(t *testing.T) {
 	base_ou := os.Getenv("AD_BASE_OU")
+	group1DN := "CN=test_acc_group1," + base_ou
+	group2DN := "CN=test_acc_group2," + base_ou
+	group3DN := "CN=test_acc_group3," + base_ou
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -58,20 +63,20 @@ func TestAccObjectMemberOf_Basic(t *testing.T) {
 				// add 2 computer to a group
 				Config: testAccResourceObjectMemberOfTestData(base_ou, `[activedirectory_group.test_acc_group1.dn, activedirectory_group.test_acc_group2.dn]`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckObjectMemberOfRemoteAttr("activedirectory_object_memberof.test_acc_obj_memberof"),
+					testAccCheckObjectMemberOfRemoteAttr("activedirectory_object_memberof.test_acc_obj_memberof", base_ou),
 					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "object_dn", "CN=test_acc_comp1,"+base_ou),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.2656686201", "CN=test_acc_group1,"+base_ou),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.3846656666", "CN=test_acc_group2,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of."+strconv.Itoa(lowercaseHashString(group1DN)), group1DN),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of."+strconv.Itoa(lowercaseHashString(group2DN)), group2DN),
 				),
 			}, {
 				// remove 1 and add another computer to a group
 				Config: testAccResourceObjectMemberOfTestData(base_ou, `[activedirectory_group.test_acc_group1.dn, activedirectory_group.test_acc_group3.dn]`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckObjectMemberOfRemoteAttr("activedirectory_object_memberof.test_acc_obj_memberof"),
+					testAccCheckObjectMemberOfRemoteAttr("activedirectory_object_memberof.test_acc_obj_memberof", base_ou),
 					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "object_dn", "CN=test_acc_comp1,"+base_ou),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.2656686201", "CN=test_acc_group1,"+base_ou),
-					resource.TestCheckNoResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.3846656666"),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of.2057163012", "CN=test_acc_group3,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of."+strconv.Itoa(lowercaseHashString(group1DN)), group1DN),
+					resource.TestCheckNoResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of."+strconv.Itoa(lowercaseHashString(group2DN))),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of."+strconv.Itoa(lowercaseHashString(group3DN)), group3DN),
 				),
 			},
 		},
@@ -118,8 +123,12 @@ func testAccCheckObjectMemberOfDestroy(s *terraform.State) error {
 }
 
 // helper function for all test to check remote object attributes
-func testAccCheckObjectMemberOfRemoteAttr(resource string) resource.TestCheckFunc {
+func testAccCheckObjectMemberOfRemoteAttr(resource, base_ou string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
+		group1DN := "CN=test_acc_group1," + base_ou
+		group2DN := "CN=test_acc_group2," + base_ou
+		group3DN := "CN=test_acc_group3," + base_ou
+
 		rs, ok := state.RootModule().Resources[resource]
 		if !ok {
 			return fmt.Errorf("Not found: %s", resource)
@@ -149,17 +158,21 @@ func testAccCheckObjectMemberOfRemoteAttr(resource string) resource.TestCheckFun
 		// also check attributes of remote object
 		for k, v := range rs.Primary.Attributes {
 			switch k {
-			case "member_of.2656686201":
+			case "member_of." + strconv.Itoa(lowercaseHashString(group1DN)):
 				if !contains(remoteMemberOf, v) {
-					return fmt.Errorf("member_of.2656686201 in state and remote object is different.  state:%s, Remote:%s", v, remoteMemberOf)
+					return fmt.Errorf("member_of.%d in state and remote object is different.  state:%s, Remote:%s", lowercaseHashString(group1DN), v, remoteMemberOf)
 				}
-			case "member_of.3846656666":
+			case "member_of." + strconv.Itoa(lowercaseHashString(group2DN)):
 				if !contains(remoteMemberOf, v) {
-					return fmt.Errorf("member_of.3846656666 in state and remote object is different.  state:%s, Remote:%s", v, remoteMemberOf)
+					return fmt.Errorf("member_of.%d in state and remote object is different.  state:%s, Remote:%s", lowercaseHashString(group2DN), v, remoteMemberOf)
 				}
-			case "member_of.2057163012":
+			case "member_of." + strconv.Itoa(lowercaseHashString(group3DN)):
 				if !contains(remoteMemberOf, v) {
-					return fmt.Errorf("member_of.2057163012 in state and remote object is different.  state:%s, Remote:%s", v, remoteMemberOf)
+					return fmt.Errorf("member_of.%d in state and remote object is different.  state:%s, Remote:%s", lowercaseHashString(group3DN), v, remoteMemberOf)
+				}
+			default:
+				if strings.HasPrefix(k, "member_of") && k != "member_of.#" {
+					return fmt.Errorf("unknown member_of attribute found in state, key: %s. value: %s\n", k, v)
 				}
 			}
 		}
