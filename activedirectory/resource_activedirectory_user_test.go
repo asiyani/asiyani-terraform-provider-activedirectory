@@ -48,7 +48,7 @@ func init() {
 }
 
 func TestAccUser_Basic(t *testing.T) {
-	base_ou := os.Getenv("AD_BASE_OU")
+	baseOU := os.Getenv("AD_BASE_OU")
 	domain := os.Getenv("AD_DOMAIN")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -63,15 +63,15 @@ func TestAccUser_Basic(t *testing.T) {
 					user_principal_name = "test_acc_user1@%s"
 					sam_account_name    = "test_acc_user1$"
 					base_ou_dn          = "%s"
-				  }`, domain, base_ou),
+				  }`, domain, baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_user.test_acc_user1"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user1", "name", "test_acc_user1"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user1", "sam_account_name", "test_acc_user1$"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user1", "user_principal_name", "test_acc_user1@"+domain),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user1", "enabled", "false"),
-					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user1", "base_ou_dn", base_ou),
-					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user1", "dn", "CN=test_acc_user1,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user1", "base_ou_dn", baseOU),
+					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user1", "dn", "CN=test_acc_user1,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user1", "attributes", "{}"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user1", "description", ""),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user1", "first_name", ""),
@@ -84,7 +84,7 @@ func TestAccUser_Basic(t *testing.T) {
 }
 
 func TestAccUser_Advanced(t *testing.T) {
-	base_ou := os.Getenv("AD_BASE_OU")
+	baseOU := os.Getenv("AD_BASE_OU")
 	domain := os.Getenv("AD_DOMAIN")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -93,7 +93,7 @@ func TestAccUser_Advanced(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// create object with all optional arguments defined
-				Config: testAccResourceADUserTestData("2", "false", "John", "Doe", "John Doe", "test_acc_John.Doe", "John.Doe@"+domain, "secretPassword!123", base_ou, "testing description", `{company=["home"],department=["IT TF"]}`),
+				Config: testAccResourceADUserTestData("2", "false", "John", "Doe", "John Doe", "test_acc_John.Doe", "John.Doe@"+domain, "secretPassword!123", baseOU, "testing description", `{company=["home"],department=["IT TF"]}`, baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_user.test_acc_user2"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "enabled", "false"),
@@ -102,14 +102,14 @@ func TestAccUser_Advanced(t *testing.T) {
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "name", "John Doe"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "sam_account_name", "test_acc_John.Doe"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "user_principal_name", "John.Doe@"+domain),
-					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "base_ou_dn", base_ou),
-					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "dn", "CN=John Doe,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "base_ou_dn", baseOU),
+					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "dn", "CN=John Doe,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "attributes", `{"company":["home"],"department":["IT TF"]}`),
 				),
 			}, {
 				// rename user and enable user
-				Config: testAccResourceADUserTestData("2", "true", "John", "Smith", "John Smith", "test_acc_John.Smith", "John.Smith@"+domain, "secretPassword!123", base_ou, "testing description", `{company=["home"],department=["IT TF"]}`),
+				Config: testAccResourceADUserTestData("2", "true", "John", "Smith", "John Smith", "test_acc_John.Smith", "John.Smith@"+domain, "secretPassword!123", baseOU, "testing description", `{company=["home"],department=["IT TF"]}`, baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_user.test_acc_user2"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "enabled", "true"),
@@ -118,14 +118,14 @@ func TestAccUser_Advanced(t *testing.T) {
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "name", "John Smith"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "sam_account_name", "test_acc_John.Smith"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "user_principal_name", "John.Smith@"+domain),
-					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "base_ou_dn", base_ou),
-					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "dn", "CN=John Smith,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "base_ou_dn", baseOU),
+					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "dn", "CN=John Smith,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "attributes", `{"company":["home"],"department":["IT TF"]}`),
 				),
 			}, {
 				// update attributes and change password
-				Config: testAccResourceADUserTestData("2", "true", "John", "Smith", "John Smith", "test_acc_John.Smith", "John.Smith@"+domain, "NewsecretPassword!123", base_ou, "testing description", `{company=["Terraform"],department=["IT"],departmentNumber=["24"]}`),
+				Config: testAccResourceADUserTestData("2", "true", "John", "Smith", "John Smith", "test_acc_John.Smith", "John.Smith@"+domain, "NewsecretPassword!123", baseOU, "testing description", `{company=["Terraform"],department=["IT"],departmentNumber=["24"]}`, baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_user.test_acc_user2"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "enabled", "true"),
@@ -134,14 +134,14 @@ func TestAccUser_Advanced(t *testing.T) {
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "name", "John Smith"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "sam_account_name", "test_acc_John.Smith"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "user_principal_name", "John.Smith@"+domain),
-					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "base_ou_dn", base_ou),
-					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "dn", "CN=John Smith,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "base_ou_dn", baseOU),
+					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "dn", "CN=John Smith,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "attributes", `{"company":["Terraform"],"department":["IT"],"departmentNumber":["24"]}`),
 				),
 			}, {
 				// move user
-				Config: testAccResourceADUserTestData("2", "true", "John", "Smith", "John Smith", "test_acc_John.Smith", "John.Smith@"+domain, "NewsecretPassword!123", "CN=Users,"+base_ou, "testing description", `{company=["Terraform"],department=["IT"],departmentNumber=["24"]}`),
+				Config: testAccResourceADUserTestData("2", "true", "John", "Smith", "John Smith", "test_acc_John.Smith", "John.Smith@"+domain, "NewsecretPassword!123", "${activedirectory_ou.test_acc_ou_usrMove.dn}", "testing description", `{company=["Terraform"],department=["IT"],departmentNumber=["24"]}`, baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_user.test_acc_user2"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "enabled", "true"),
@@ -150,8 +150,8 @@ func TestAccUser_Advanced(t *testing.T) {
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "name", "John Smith"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "sam_account_name", "test_acc_John.Smith"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "user_principal_name", "John.Smith@"+domain),
-					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "base_ou_dn", "CN=Users,"+base_ou),
-					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "dn", "CN=John Smith,CN=Users,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "base_ou_dn", "OU=test_acc_ou_usrMove,"+baseOU),
+					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "dn", "CN=John Smith,OU=test_acc_ou_usrMove,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_user.test_acc_user2", "attributes", `{"company":["Terraform"],"department":["IT"],"departmentNumber":["24"]}`),
 				),
@@ -160,7 +160,7 @@ func TestAccUser_Advanced(t *testing.T) {
 	})
 }
 
-func testAccResourceADUserTestData(num, enabled, first, last, name, sam, upn, pass, ou, description, attributes string) string {
+func testAccResourceADUserTestData(num, enabled, first, last, name, sam, upn, pass, ou, description, attributes, baseOU string) string {
 	return fmt.Sprintf(`
 resource "activedirectory_user" "test_acc_user%s" {
 	enabled             = %s
@@ -173,7 +173,12 @@ resource "activedirectory_user" "test_acc_user%s" {
 	base_ou_dn          = "%s"
 	description         = "%s"
 	attributes          = jsonencode(%s)
-}`, num, enabled, first, last, name, sam, upn, pass, ou, description, attributes)
+}
+resource "activedirectory_ou" "test_acc_ou_usrMove" {
+	name             = "test_acc_ou_usrMove"
+	base_ou_dn       = "%s"
+}
+`, num, enabled, first, last, name, sam, upn, pass, ou, description, attributes, baseOU)
 }
 
 func testAccCheckUserDestroy(s *terraform.State) error {

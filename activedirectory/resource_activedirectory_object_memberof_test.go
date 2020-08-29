@@ -50,10 +50,10 @@ func init() {
 }
 
 func TestAccObjectMemberOf_Basic(t *testing.T) {
-	base_ou := os.Getenv("AD_BASE_OU")
-	group1DN := "CN=test_acc_group1," + base_ou
-	group2DN := "CN=test_acc_group2," + base_ou
-	group3DN := "CN=test_acc_group3," + base_ou
+	baseOU := os.Getenv("AD_BASE_OU")
+	group1DN := "CN=test_acc_group1," + baseOU
+	group2DN := "CN=test_acc_group2," + baseOU
+	group3DN := "CN=test_acc_group3," + baseOU
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -61,19 +61,19 @@ func TestAccObjectMemberOf_Basic(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// add 2 computer to a group
-				Config: testAccResourceObjectMemberOfTestData(base_ou, `[activedirectory_group.test_acc_group1.dn, activedirectory_group.test_acc_group2.dn]`),
+				Config: testAccResourceObjectMemberOfTestData(baseOU, `[activedirectory_group.test_acc_group1.dn, activedirectory_group.test_acc_group2.dn]`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckObjectMemberOfRemoteAttr("activedirectory_object_memberof.test_acc_obj_memberof", base_ou),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "object_dn", "CN=test_acc_comp1,"+base_ou),
+					testAccCheckObjectMemberOfRemoteAttr("activedirectory_object_memberof.test_acc_obj_memberof", baseOU),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "object_dn", "CN=test_acc_comp1,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of."+strconv.Itoa(lowercaseHashString(group1DN)), group1DN),
 					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of."+strconv.Itoa(lowercaseHashString(group2DN)), group2DN),
 				),
 			}, {
 				// remove 1 and add another computer to a group
-				Config: testAccResourceObjectMemberOfTestData(base_ou, `[activedirectory_group.test_acc_group1.dn, activedirectory_group.test_acc_group3.dn]`),
+				Config: testAccResourceObjectMemberOfTestData(baseOU, `[activedirectory_group.test_acc_group1.dn, activedirectory_group.test_acc_group3.dn]`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckObjectMemberOfRemoteAttr("activedirectory_object_memberof.test_acc_obj_memberof", base_ou),
-					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "object_dn", "CN=test_acc_comp1,"+base_ou),
+					testAccCheckObjectMemberOfRemoteAttr("activedirectory_object_memberof.test_acc_obj_memberof", baseOU),
+					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "object_dn", "CN=test_acc_comp1,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of."+strconv.Itoa(lowercaseHashString(group1DN)), group1DN),
 					resource.TestCheckNoResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of."+strconv.Itoa(lowercaseHashString(group2DN))),
 					resource.TestCheckResourceAttr("activedirectory_object_memberof.test_acc_obj_memberof", "member_of."+strconv.Itoa(lowercaseHashString(group3DN)), group3DN),
@@ -84,7 +84,7 @@ func TestAccObjectMemberOf_Basic(t *testing.T) {
 }
 
 // also create 1 computer and 3 group resource to test membership
-func testAccResourceObjectMemberOfTestData(base_ou, members string) string {
+func testAccResourceObjectMemberOfTestData(baseOU, members string) string {
 	return fmt.Sprintf(`
 resource "activedirectory_computer" "test_acc_comp1" {
 	name             = "test_acc_comp1"
@@ -110,7 +110,7 @@ resource "activedirectory_object_memberof" "test_acc_obj_memberof" {
 	object_dn = activedirectory_computer.test_acc_comp1.dn
 	member_of = %s
 }
-`, base_ou, base_ou, base_ou, base_ou, members)
+`, baseOU, baseOU, baseOU, baseOU, members)
 }
 
 func testAccCheckObjectMemberOfDestroy(s *terraform.State) error {
@@ -123,11 +123,11 @@ func testAccCheckObjectMemberOfDestroy(s *terraform.State) error {
 }
 
 // helper function for all test to check remote object attributes
-func testAccCheckObjectMemberOfRemoteAttr(resource, base_ou string) resource.TestCheckFunc {
+func testAccCheckObjectMemberOfRemoteAttr(resource, baseOU string) resource.TestCheckFunc {
 	return func(state *terraform.State) error {
-		group1DN := "CN=test_acc_group1," + base_ou
-		group2DN := "CN=test_acc_group2," + base_ou
-		group3DN := "CN=test_acc_group3," + base_ou
+		group1DN := "CN=test_acc_group1," + baseOU
+		group2DN := "CN=test_acc_group2," + baseOU
+		group3DN := "CN=test_acc_group3," + baseOU
 
 		rs, ok := state.RootModule().Resources[resource]
 		if !ok {
