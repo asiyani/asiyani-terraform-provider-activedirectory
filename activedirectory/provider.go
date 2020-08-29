@@ -1,10 +1,12 @@
 package activedirectory
 
 import (
+	"fmt"
 	"os"
 	"regexp"
 	"strings"
 
+	"github.com/go-ldap/ldap/v3"
 	"github.com/hashicorp/go-hclog"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/helper/validation"
@@ -26,7 +28,13 @@ func Provider() terraform.ResourceProvider {
 				Type:        schema.TypeString,
 				Required:    true,
 				DefaultFunc: schema.EnvDefaultFunc("AD_DOMAIN", nil),
-				Description: "The AD base domain.",
+				Description: "The AD domain.",
+			},
+			"top_dn": {
+				Type:        schema.TypeString,
+				Optional:    true,
+				DefaultFunc: schema.EnvDefaultFunc("AD_TOP_DN", nil),
+				Description: "The AD base domain to use.",
 			},
 			"bind_username": {
 				Type:        schema.TypeString,
@@ -67,8 +75,16 @@ func Provider() terraform.ResourceProvider {
 
 func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	domain := d.Get("domain").(string)
+	topDN := d.Get("top_dn").(string)
+	domainDN := strings.ToLower("dc=" + strings.Replace(domain, ".", ",dc=", -1))
 
-	topDN := "dc=" + strings.Replace(domain, ".", ",dc=", -1)
+	if topDN == "" {
+		topDN = domainDN
+	}
+
+	if err := validateTopDNString(domainDN, topDN); err != nil {
+		return nil, fmt.Errorf("unable to verify top_dn err:%w", err)
+	}
 
 	client := &ADClient{
 		logger: hclog.New(&hclog.LoggerOptions{
@@ -86,4 +102,18 @@ func providerConfigure(d *schema.ResourceData) (interface{}, error) {
 	}
 	client.logger.Debug("providerConfigure: ad client initialised")
 	return client, nil
+}
+
+func validateTopDNString(domainDN, topDN string) error {
+	var errStr string
+	if !strings.HasSuffix(strings.ToLower(topDN), domainDN) {
+		errStr += fmt.Sprintf(`top_dn should end with domain component %q : `, domainDN)
+	}
+	if _, err := ldap.ParseDN(strings.ToLower(topDN)); err != nil {
+		errStr += fmt.Sprintf("top_dn is not a valid DN err: %v", err)
+	}
+	if errStr == "" {
+		return nil
+	}
+	return fmt.Errorf("error: %s, got: %s", errStr, topDN)
 }

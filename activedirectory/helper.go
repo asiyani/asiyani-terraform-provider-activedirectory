@@ -75,7 +75,7 @@ func validateDNString(c *ADClient, ou string) error {
 	// validate OU Entry with to make sure its a full path
 	errStr := ""
 	if !strings.HasSuffix(strings.ToLower(ou), c.config.topDN) {
-		errStr += fmt.Sprintf(`ou should end with domain component %q : `, c.config.topDN)
+		errStr += fmt.Sprintf(`full ou path should end with top dn %q : `, c.config.topDN)
 	}
 	if _, err := ldap.ParseDN(strings.ToLower(ou)); err != nil {
 		errStr += fmt.Sprintf("ou is not a valid DN err: %v", err)
