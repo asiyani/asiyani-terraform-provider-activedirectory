@@ -48,7 +48,7 @@ func init() {
 }
 
 func TestAccComputer_Basic(t *testing.T) {
-	base_ou := os.Getenv("AD_BASE_OU")
+	baseOU := os.Getenv("AD_BASE_OU")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
@@ -61,14 +61,14 @@ func TestAccComputer_Basic(t *testing.T) {
 					name             = "test_acc_comp1"
 					sam_account_name = "test_acc_comp1$"	
 					base_ou_dn       = "%s"
-				}`, base_ou),
+				}`, baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_computer.test_acc_comp1"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "name", "test_acc_comp1"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "sam_account_name", "test_acc_comp1$"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "enabled", "true"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "base_ou_dn", base_ou),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "dn", "CN=test_acc_comp1,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "base_ou_dn", baseOU),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "dn", "CN=test_acc_comp1,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "attributes", "{}"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp1", "description", ""),
 				),
@@ -78,7 +78,7 @@ func TestAccComputer_Basic(t *testing.T) {
 }
 
 func TestAccComputer_Advanced(t *testing.T) {
-	base_ou := os.Getenv("AD_BASE_OU")
+	baseOU := os.Getenv("AD_BASE_OU")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -87,43 +87,43 @@ func TestAccComputer_Advanced(t *testing.T) {
 			{
 				// create object with all optional arguments defined
 				Config: testAccResourceADComputerTestData("2", "false", "test_acc_comp2", "test_acc_comp2",
-					base_ou, "testing description", `{company=["home"],department=["IT TF"]}`),
+					baseOU, "testing description", `{company=["home"],department=["IT TF"]}`, baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_computer.test_acc_comp2"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "name", "test_acc_comp2"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "sam_account_name", "test_acc_comp2$"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "enabled", "false"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", base_ou),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", baseOU),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "attributes", `{"company":["home"],"department":["IT TF"]}`),
 				),
 			}, {
 				// enabled object, Change CN, OU and attributes
 				Config: testAccResourceADComputerTestData("2", "true", "test_acc_comp2_update", "test_acc_comp2",
-					"cn=Computers,"+base_ou, "testing description", `{company=["Terraform"],department=["IT"],departmentNumber=["24"]}`),
+					"${activedirectory_ou.test_acc_ou_cmpMove.dn}", "testing description", `{company=["Terraform"],department=["IT"],departmentNumber=["24"]}`, baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_computer.test_acc_comp2"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "name", "test_acc_comp2_update"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "sam_account_name", "test_acc_comp2$"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "enabled", "true"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", "CN=Computers,"+base_ou),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2_update,CN=Computers,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", "OU=test_acc_ou_cmpMove,"+baseOU),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2_update,OU=test_acc_ou_cmpMove,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "attributes", `{"company":["Terraform"],"department":["IT"],"departmentNumber":["24"]}`),
 				),
 			}, {
 				// changed SAM name and remove some attributes
 				Config: testAccResourceADComputerTestData("2", "true", "test_acc_comp2_update", "test_acc_comp2_new",
-					"cn=Computers,"+base_ou, "testing description", `{company=["Terraform"]}`),
+					"${activedirectory_ou.test_acc_ou_cmpMove.dn}", "testing description", `{company=["Terraform"]}`, baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_computer.test_acc_comp2"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "name", "test_acc_comp2_update"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "sam_account_name", "test_acc_comp2_new$"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "enabled", "true"),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", "CN=Computers,"+base_ou),
-					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2_update,CN=Computers,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "base_ou_dn", "OU=test_acc_ou_cmpMove,"+baseOU),
+					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "dn", "CN=test_acc_comp2_update,OU=test_acc_ou_cmpMove,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_computer.test_acc_comp2", "attributes", `{"company":["Terraform"]}`),
 				),
 			},
@@ -131,7 +131,7 @@ func TestAccComputer_Advanced(t *testing.T) {
 	})
 }
 
-func testAccResourceADComputerTestData(num, enabled, name, sam, ou, description, attributes string) string {
+func testAccResourceADComputerTestData(num, enabled, name, sam, ou, description, attributes, baseOU string) string {
 	return fmt.Sprintf(`
 resource "activedirectory_computer" "test_acc_comp%s" {
 	enabled          = %s
@@ -141,7 +141,12 @@ resource "activedirectory_computer" "test_acc_comp%s" {
 	description      = "%s"
 	attributes = jsonencode(%s)
 }
-`, num, enabled, name, sam, ou, description, attributes)
+
+resource "activedirectory_ou" "test_acc_ou_cmpMove" {
+	name             = "test_acc_ou_cmpMove"
+	base_ou_dn       = "%s"
+}
+`, num, enabled, name, sam, ou, description, attributes, baseOU)
 }
 
 func testAccCheckComputerDestroy(s *terraform.State) error {

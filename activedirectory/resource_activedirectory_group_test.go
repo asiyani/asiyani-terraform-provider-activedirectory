@@ -48,7 +48,7 @@ func init() {
 }
 
 func TestAccGroup_Basic(t *testing.T) {
-	base_ou := os.Getenv("AD_BASE_OU")
+	baseOU := os.Getenv("AD_BASE_OU")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -60,13 +60,13 @@ func TestAccGroup_Basic(t *testing.T) {
 					name             = "test_acc_group1"
 					sam_account_name = "test_acc_group1"
 					base_ou_dn       = "%s"
-				}`, base_ou),
+				}`, baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_group.test_acc_group1"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "name", "test_acc_group1"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "sam_account_name", "test_acc_group1"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "base_ou_dn", base_ou),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "dn", "CN=test_acc_group1,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "base_ou_dn", baseOU),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "dn", "CN=test_acc_group1,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "scope", "global"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "type", "security"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group1", "attributes", "{}"),
@@ -78,7 +78,7 @@ func TestAccGroup_Basic(t *testing.T) {
 }
 
 func TestAccGroup_Advanced(t *testing.T) {
-	base_ou := os.Getenv("AD_BASE_OU")
+	baseOU := os.Getenv("AD_BASE_OU")
 	resource.Test(t, resource.TestCase{
 		PreCheck:     func() { testAccPreCheck(t) },
 		Providers:    testAccProviders,
@@ -87,65 +87,65 @@ func TestAccGroup_Advanced(t *testing.T) {
 			{
 				// create group as global, security and other optional arguments defined
 				Config: testAccResourceADGroupTestData("2", "test_acc_group2", "test_acc_group2",
-					base_ou, "testing description", "global", "security"),
+					baseOU, "testing description", "global", "security", baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_group.test_acc_group2"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "name", "test_acc_group2"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "sam_account_name", "test_acc_group2"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "base_ou_dn", base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "base_ou_dn", baseOU),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "scope", "global"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "type", "security"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "dn", "CN=test_acc_group2,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "dn", "CN=test_acc_group2,"+baseOU),
 				),
 			}, {
 				// change CN and OU
 				Config: testAccResourceADGroupTestData("2", "test_acc_group2_update", "test_acc_group2",
-					"CN=Builtin,"+base_ou, "testing description", "global", "security"),
+					"${activedirectory_ou.test_acc_ou_grpMove.dn}", "testing description", "global", "security", baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_group.test_acc_group2"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "name", "test_acc_group2_update"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "sam_account_name", "test_acc_group2"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "base_ou_dn", "CN=Builtin,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "base_ou_dn", "OU=test_acc_ou_grpMove,"+baseOU),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "scope", "global"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "type", "security"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "dn", "CN=test_acc_group2_update,CN=Builtin,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group2", "dn", "CN=test_acc_group2_update,OU=test_acc_ou_grpMove,"+baseOU),
 				),
 			}, {
 				// create group as universal and distribution
 				Config: testAccResourceADGroupTestData("3", "test_acc_group3", "test_acc_group3",
-					base_ou, "testing description", "universal", "distribution"),
+					baseOU, "testing description", "universal", "distribution", baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_group.test_acc_group3"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "name", "test_acc_group3"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "sam_account_name", "test_acc_group3"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "base_ou_dn", base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "base_ou_dn", baseOU),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "scope", "universal"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "type", "distribution"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "dn", "CN=test_acc_group3,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group3", "dn", "CN=test_acc_group3,"+baseOU),
 				),
 			}, {
 				// create group as domain_local and security
 				Config: testAccResourceADGroupTestData("4", "test_acc_group4", "test_acc_group4",
-					base_ou, "testing description", "domain_local", "security"),
+					baseOU, "testing description", "domain_local", "security", baseOU),
 				Check: resource.ComposeTestCheckFunc(
 					testAccCheckObjectRemoteAttr("activedirectory_group.test_acc_group4"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "name", "test_acc_group4"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "sam_account_name", "test_acc_group4"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "base_ou_dn", base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "base_ou_dn", baseOU),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "description", "testing description"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "scope", "domain_local"),
 					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "type", "security"),
-					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "dn", "CN=test_acc_group4,"+base_ou),
+					resource.TestCheckResourceAttr("activedirectory_group.test_acc_group4", "dn", "CN=test_acc_group4,"+baseOU),
 				),
 			},
 		},
 	})
 }
 
-func testAccResourceADGroupTestData(num, name, sam, ou, description, scope, groupType string) string {
+func testAccResourceADGroupTestData(num, name, sam, ou, description, scope, groupType, baseOU string) string {
 	return fmt.Sprintf(`
 resource "activedirectory_group" "test_acc_group%s" {
 	name             = "%s"
@@ -155,7 +155,12 @@ resource "activedirectory_group" "test_acc_group%s" {
 	scope            = "%s"
 	type             = "%s"
 }
-`, num, name, sam, ou, description, scope, groupType)
+
+resource "activedirectory_ou" "test_acc_ou_grpMove" {
+	name             = "test_acc_ou_grpMove"
+	base_ou_dn       = "%s"
+}
+`, num, name, sam, ou, description, scope, groupType, baseOU)
 }
 
 func testAccCheckGroupDestroy(s *terraform.State) error {

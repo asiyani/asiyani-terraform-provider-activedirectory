@@ -15,10 +15,10 @@ func updateObjectSchema(resourceSchema map[string]*schema.Schema, e *ldap.Entry,
 	for s := range resourceSchema {
 		switch s {
 		case "guid":
-			rGuid := e.GetAttributeValue("objectGUID")
-			guid, err := decodeGUID([]byte(rGuid))
+			rGUID := e.GetAttributeValue("objectGUID")
+			guid, err := decodeGUID([]byte(rGUID))
 			if err != nil {
-				return fmt.Errorf("updateObjectSchema: unable to convert raw GUID to string rawGUID:%x err:%w", fmt.Sprintf("%x", rGuid), err)
+				return fmt.Errorf("updateObjectSchema: unable to convert raw GUID to string rawGUID:%x err:%w", fmt.Sprintf("%x", rGUID), err)
 			}
 			if err = d.Set("guid", guid); err != nil {
 				return fmt.Errorf("updateObjectSchema: unable to set argument 'guid' value:%v err:%w", guid, err)

@@ -63,10 +63,10 @@ func resourceCreateGroupMembers(d *schema.ResourceData, meta interface{}) error 
 	if err != nil {
 		return fmt.Errorf("resourceCreateGroupMembers: unable to search group with dn:%v err:%w", groupDN, err)
 	}
-	rawGuid := entry.GetRawAttributeValue("objectGUID")
-	guid, err := decodeGUID(rawGuid)
+	rawGUID := entry.GetRawAttributeValue("objectGUID")
+	guid, err := decodeGUID(rawGUID)
 	if err != nil {
-		return fmt.Errorf("resourceCreateGroupMembers: unable to convert raw GUID to string rawGUID:%x err:%w", rawGuid, err)
+		return fmt.Errorf("resourceCreateGroupMembers: unable to convert raw GUID to string rawGUID:%x err:%w", rawGUID, err)
 	}
 
 	var objectDN []string
@@ -131,7 +131,7 @@ func resourceUpdateGroupMembers(d *schema.ResourceData, meta interface{}) error 
 	defer c.done()
 
 	if d.HasChange("group_dn") {
-		return fmt.Errorf("'activedirectory_group_members' will not make any changes to group DN. group_dn is only used to as reference.")
+		return fmt.Errorf("'activedirectory_group_members' will not make any changes to group DN. group_dn is only used to as reference")
 	}
 
 	modReq := &ldap.ModifyRequest{DN: d.Get("group_dn").(string)}

@@ -83,15 +83,15 @@ func dataReadObject(d *schema.ResourceData, meta interface{}) error {
 	defer c.done()
 
 	var e *ldap.Entry
-	objectGuid := d.Get("guid").(string)
+	objectGUID := d.Get("guid").(string)
 	dn := d.Get("dn").(string)
 
-	if objectGuid == "" && dn == "" {
-		return fmt.Errorf("specify either 'guid' or 'dn' to search object.")
+	if objectGUID == "" && dn == "" {
+		return fmt.Errorf("specify either 'guid' or 'dn' to search object")
 	}
 
-	if objectGuid != "" {
-		id, err := encodeGUID(objectGuid)
+	if objectGUID != "" {
+		id, err := encodeGUID(objectGUID)
 		if err != nil {
 			return fmt.Errorf("dataReadObject: unable to encode GUID:%v err:%w", d.Id(), err)
 		}
@@ -115,10 +115,10 @@ func dataReadObject(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	rawGuid := e.GetRawAttributeValue("objectGUID")
-	guid, err := decodeGUID(rawGuid)
+	rawGUID := e.GetRawAttributeValue("objectGUID")
+	guid, err := decodeGUID(rawGUID)
 	if err != nil {
-		return fmt.Errorf("dataReadObject: unable to convert raw GUID to string rawGUID:%x err:%w", rawGuid, err)
+		return fmt.Errorf("dataReadObject: unable to convert raw GUID to string rawGUID:%x err:%w", rawGUID, err)
 	}
 	d.SetId(guid)
 

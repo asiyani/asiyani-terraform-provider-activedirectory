@@ -19,10 +19,12 @@ The following arguments are used to configure the Active Directory Provider:
 
 * `ldap_url` - (Required) - The LDAP URL to be used for connection. The supported schemas are: `ldap://` or `ldaps://` ie ldap://[IP]:389. it can also be sourced from the env `AD_LDAP_URL`.
 
-* `domain` - (Required) - The AD base domain. it can also be sourced from the env `AD_DOMAIN`.
+* `domain` - (Required) - The AD domain. it can also be sourced from the env `AD_DOMAIN`.
 
 * `bind_username` - (Required) - AD service account to be used for authenticating on the AD server. it can also be sourced from the env `AD_BIND_USERNAME`.
 
 * `bind_password` - (Required) - The password of the AD service account. it can also be sourced from the env `AD_BIND_PASSWORD`.
+
+* `top_dn` - (Optional) - The AD base domain to use. it can also be sourced from the env `AD_TOP_DN`.
 
 * `insecure_tls` - (Optional) - If true, provider skips LDAP server's SSL certificate verification (default: false). it can also be sourced from the env `AD_INSECURE_TLS`.
