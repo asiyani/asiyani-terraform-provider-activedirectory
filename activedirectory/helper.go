@@ -17,6 +17,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
+// ErrObjectNotFound is custom error for object not found
 var ErrObjectNotFound = errors.New("LDAP object not found")
 
 const (

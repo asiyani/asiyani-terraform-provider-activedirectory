@@ -54,20 +54,20 @@ func resourceCreateObjectMemberOf(d *schema.ResourceData, meta interface{}) erro
 	defer c.done()
 
 	objectDN := d.Get("object_dn").(string)
-	groupDNs := d.Get("member_of").(*schema.Set)
+	groupDNS := d.Get("member_of").(*schema.Set)
 
 	// make sure object exists
 	entry, err := getObjectByDN(c.conn, objectDN)
 	if err != nil {
 		return fmt.Errorf("resourceCreateObjectMemberOf: unable to search object with dn:%v err:%w", objectDN, err)
 	}
-	rawGuid := entry.GetRawAttributeValue("objectGUID")
-	guid, err := decodeGUID(rawGuid)
+	rawGUID := entry.GetRawAttributeValue("objectGUID")
+	guid, err := decodeGUID(rawGUID)
 	if err != nil {
-		return fmt.Errorf("resourceCreateObjectMemberOf: unable to convert raw GUID to string rawGUID:%x err:%w", rawGuid, err)
+		return fmt.Errorf("resourceCreateObjectMemberOf: unable to convert raw GUID to string rawGUID:%x err:%w", rawGUID, err)
 	}
 
-	for _, groupDN := range groupDNs.List() {
+	for _, groupDN := range groupDNS.List() {
 		if err := validateDNString(c, groupDN.(string)); err != nil {
 			return fmt.Errorf("resourceCreateObjectMemberOf: group dn is not valid err: %w", err)
 		}
@@ -120,7 +120,7 @@ func resourceUpdateObjectMemberOf(d *schema.ResourceData, meta interface{}) erro
 	objectDN := d.Get("object_dn").(string)
 
 	if d.HasChange("object_dn") {
-		return fmt.Errorf("'activedirectory_object_memberof' will not make any changes to object DN. object_dn is only used to as reference.")
+		return fmt.Errorf("'activedirectory_object_memberof' will not make any changes to object DN. object_dn is only used to as reference")
 	}
 
 	old, new := d.GetChange("member_of")
@@ -153,15 +153,15 @@ func resourceDeleteObjectMemberOf(d *schema.ResourceData, meta interface{}) erro
 	defer c.done()
 
 	objectDN := d.Get("object_dn").(string)
-	groupDNs := d.Get("member_of").(*schema.Set)
+	groupDNS := d.Get("member_of").(*schema.Set)
 
-	for _, groupDN := range groupDNs.List() {
+	for _, groupDN := range groupDNS.List() {
 		if err := removeObjectFromGroup(c.conn, groupDN.(string), objectDN); err != nil {
 			return fmt.Errorf("unable to remove object from group: %s, err:%w", groupDN, err)
 		}
 	}
 
-	c.logger.Info("resourceDeleteObjectMemberOf: AD object removed from groups", "dn", objectDN, "member_of", groupDNs.List())
+	c.logger.Info("resourceDeleteObjectMemberOf: AD object removed from groups", "dn", objectDN, "member_of", groupDNS.List())
 	return nil
 }
 

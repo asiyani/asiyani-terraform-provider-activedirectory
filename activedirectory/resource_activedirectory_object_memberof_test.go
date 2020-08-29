@@ -172,7 +172,7 @@ func testAccCheckObjectMemberOfRemoteAttr(resource, baseOU string) resource.Test
 				}
 			default:
 				if strings.HasPrefix(k, "member_of") && k != "member_of.#" {
-					return fmt.Errorf("unknown member_of attribute found in state, key: %s. value: %s\n", k, v)
+					return fmt.Errorf("unknown member_of attribute found in state, key: %s value: %s", k, v)
 				}
 			}
 		}

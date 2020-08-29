@@ -12,6 +12,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/helper/schema"
 )
 
+// ADClient is used to make AD connections
 type ADClient struct {
 	logger        hclog.Logger
 	config        Config
@@ -20,6 +21,7 @@ type ADClient struct {
 	activeWorkers int
 }
 
+// Config represents AD config
 type Config struct {
 	serverURL   string
 	domain      string
@@ -174,10 +176,10 @@ func addObject(conn *ldap.Conn, addReq *ldap.AddRequest) (string, error) {
 		return "", fmt.Errorf("addObject: unable to get created object's ID  dn:%v err:%w", addReq.DN, err)
 	}
 
-	rawGuid := e.GetRawAttributeValue("objectGUID")
-	guid, err := decodeGUID(rawGuid)
+	rawGUID := e.GetRawAttributeValue("objectGUID")
+	guid, err := decodeGUID(rawGUID)
 	if err != nil {
-		return "", fmt.Errorf("addObject: unable to convert raw GUID to string   rawGUID:%x err:%w", rawGuid, err)
+		return "", fmt.Errorf("addObject: unable to convert raw GUID to string   rawGUID:%x err:%w", rawGUID, err)
 	}
 	return guid, nil
 }

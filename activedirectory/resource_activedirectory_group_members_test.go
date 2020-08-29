@@ -174,7 +174,7 @@ func testAccCheckGroupMemberRemoteAttr(baseOU, resource string) resource.TestChe
 				}
 			default:
 				if strings.HasPrefix(k, "members") && k != "members.#" {
-					return fmt.Errorf("unknown members attribute found in state, key: %s. value: %s\n", k, v)
+					return fmt.Errorf("unknown members attribute found in state, key: %s value: %s", k, v)
 				}
 			}
 		}
